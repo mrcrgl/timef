@@ -10,7 +10,13 @@ this in turn leads to zero memory allocations within the formatter.
 ## Usage
 
 ```go
-import "github.com/mrcrgl/timef"
+import (
+	"bytes"
+	"fmt"
+	"time"
+
+	"github.com/mrcrgl/timef"
+)
 
 func toString() {
 	f, _ := timef.Format(time.RFC3339, time.Now())
