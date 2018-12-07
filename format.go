@@ -38,11 +38,18 @@ func FormatBytes(layout string, t time.Time) ([]byte, error) {
 
 // "2006-01-02T15:04:05Z07:00"
 func FormatRFC3339(t time.Time) []byte {
-	return WriteRFC3339(make([]byte, RFC3339BufSize, RFC3339BufCap), t)
+	bs := make([]byte, RFC3339BufSize, RFC3339BufCap)
+	WriteRFC3339(t, bs)
+
+	return bs
 }
 
-func WriteRFC3339(bs []byte, t time.Time) []byte {
-	b := &buffer{t: bs}
+func WriteRFC3339(t time.Time, bs []byte) (int, error) {
+	return WriteRFC3339At(t, bs, 0)
+}
+
+func WriteRFC3339At(t time.Time, bs []byte, off int64) (int, error) {
+	b := &buffer{t: bs, p: off}
 
 	year, month, day := t.Date()
 	hour, minute, second := t.Clock()
@@ -74,23 +81,17 @@ func WriteRFC3339(bs []byte, t time.Time) []byte {
 	b.writeByte(octColon)
 	b.writeTwoDigits(offsetMin % 60)
 
-	return b.t
+	return int(b.p - off), nil
 }
-
-/*func buf(size int, cap int) *buffer {
-	b := new(buffer)
-	b.t = make([]byte, size, cap)
-	return b
-}*/
 
 type buffer struct {
 	t []byte
-	p int
+	p int64
 }
 
 func (b *buffer) writeByte(a ...byte) {
-	copy(b.t[b.p:b.p+len(a)], a)
-	b.p += len(a)
+	copy(b.t[b.p:b.p+int64(len(a))], a)
+	b.p += int64(len(a))
 }
 
 func (b *buffer) writeTwoDigits(i int) {
@@ -100,7 +101,7 @@ func (b *buffer) writeTwoDigits(i int) {
 	b.p += 2
 }
 
-func (b *buffer) writeNDigits(n, d int, pad byte) {
+func (b *buffer) writeNDigits(n int64, d int, pad byte) {
 	j := n - 1
 	for ; j >= 0 && d > 0; j-- {
 		b.t[b.p+j] = digits[d%10]

@@ -74,7 +74,7 @@ func Benchmark_WriteRFC3339(b *testing.B) {
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		WriteRFC3339(bs, t)
+		WriteRFC3339(t, bs)
 	}
 }
 
